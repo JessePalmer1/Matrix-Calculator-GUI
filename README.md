@@ -1,5 +1,5 @@
 # Matrix-Calculator-GUI
-This interface, created from javaFX, allows users to calculate various arithmetic operations on matrices, such as addition, subtraction, multiplication, and the determinant.
+This interface, fully implemented in MatrixOperationsGUI.java, created from javaFX, allows users to calculate various arithmetic operations on matrices, such as addition, subtraction, multiplication, and the determinant.
 
 The start method (launched by main) runs a switch statement from the drop down box, which will call the appropriate matrix operation.
 
