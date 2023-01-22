@@ -7,6 +7,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 import javafx.scene.control.Button;
 import java.lang.NumberFormatException;
+import java.text.DecimalFormat;
 import javafx.scene.control.Alert;
 import javafx.scene.layout.HBox;
 import javafx.geometry.Insets;
@@ -30,7 +31,7 @@ public class MatrixOperationsGUI extends Application {
     public void start(Stage stage) {
         //operationSelectionBox contains a drop down selection of the various possible operations
         ComboBox<String> operationSelectionBox = new ComboBox<>();
-        operationSelectionBox.getItems().addAll("Determinant", "Add", "Subtract", "Multiply");
+        operationSelectionBox.getItems().addAll("Determinant", "Add", "Subtract", "Multiply", "Row reduce");
         operationSelectionBox.setMaxWidth(130);
         operationSelectionBox.setPromptText("Select Operation");
 
@@ -49,21 +50,33 @@ public class MatrixOperationsGUI extends Application {
             firstContinuationBox.getChildren().clear();
 
             //Depending on the operation selected, the appropriate method will be called and added to firstContinuationBox
-            switch (operationSelectionBox.getValue()) {
-                case "Determinant":
-                    firstContinuationBox.getChildren().add(determinantGUI());
-                    break;
-                case "Add":
-                    firstContinuationBox.getChildren().add(sumGUI());
-                    break;
-                case "Subtract":
-                    firstContinuationBox.getChildren().add(differenceGUI());
-                    break;
-                case "Multiply":
-                    firstContinuationBox.getChildren().add(productGUI());
-                    break;
-                default:
-                    break;
+            try {
+                switch (operationSelectionBox.getValue()) {
+                    case "Determinant":
+                        firstContinuationBox.getChildren().add(determinantGUI());
+                        break;
+                    case "Add":
+                        firstContinuationBox.getChildren().add(sumGUI());
+                        break;
+                    case "Subtract":
+                        firstContinuationBox.getChildren().add(differenceGUI());
+                        break;
+                    case "Multiply":
+                        firstContinuationBox.getChildren().add(productGUI());
+                        break;
+                    case "Row reduce":
+                        firstContinuationBox.getChildren().add(rowReduceGUI());
+                        break;
+                    default:
+                        break;
+                    }
+                }
+            catch (NullPointerException npe) {
+                Alert npeAlert = new Alert(Alert.AlertType.ERROR);
+                npeAlert.setTitle("Select Box Error");
+                npeAlert.setHeaderText("Error: No field selected");
+                npeAlert.setContentText("Please select an operation");
+                npeAlert.showAndWait();
             }
         });
 
@@ -191,14 +204,14 @@ public class MatrixOperationsGUI extends Application {
 
         //resetBtn will reset the GUI to before setMatrixBtn is pressed
         Button resetBtn = new Button("Reset");
-        
+
         continuationBox.getChildren().addAll(calculateBtn, answerLbl, resetBtn);
         processBox.getChildren().addAll(setMatrixBox, continuationBox);
 
         //This button sets the matrixGrd to a 2D int array which is then used to calculate the determinant and display the answer
         calculateBtn.setOnAction(e -> {
              try {
-                int[][] matrix = new int[matrixGrd.getColumnCount()][matrixGrd.getRowCount()];
+                int[][] matrix = new int[matrixGrd.getRowCount()][matrixGrd.getColumnCount()];
                 for (int i = 0; i < matrix.length; i++) {
                     for (int j = 0; j < matrix[i].length; j++) {
                         matrix[i][j] = Integer.parseInt(((TextField)(matrixGrd.getChildren().get((i * (matrix[i].length)) + j))).getCharacters().toString());
@@ -223,7 +236,7 @@ public class MatrixOperationsGUI extends Application {
         });
         return processBox;
     }
-    
+
     /**
      * This method implements the GUI aspects needed to input and calculate the sum of two matrices
      * @return a VBox of the GUI components needed
@@ -282,7 +295,7 @@ public class MatrixOperationsGUI extends Application {
                 if (matrix1Grd.getColumnCount() != matrix2Grd.getColumnCount() || matrix1Grd.getRowCount() != matrix2Grd.getRowCount()) {
                     throw (new NumberFormatException("Cannot calculate sum with given dimensions"));
                 }
-                
+
                 //These 2D arrays hold the values pulled from the textField GridPanes
                 int[][] matrix1 = new int[matrix1Grd.getRowCount()][matrix1Grd.getColumnCount()];
                 for (int i = 0; i < matrix1.length; i++) {
@@ -296,7 +309,7 @@ public class MatrixOperationsGUI extends Application {
                         matrix2[i][j] = Integer.parseInt(((TextField)(matrix2Grd.getChildren().get((i * (matrix2[i].length)) + j))).getCharacters().toString());
                     }
                 }
-                
+
                 int[][] sumAsMatrix = Operations.sum(matrix1, matrix2);
                 answerBox.getChildren().addAll(new Label("Sum: "), displayMatrix(sumAsMatrix));
                 processBox.getChildren().add(answerBox);
@@ -316,8 +329,8 @@ public class MatrixOperationsGUI extends Application {
 
         //resetBtn clears the GridPanes, the answerBox, and sets the continuationBox visibility to false
         resetBtn.setOnAction(e -> {
-          matrix1Grd.getChildren().clear();  
-          matrix2Grd.getChildren().clear();  
+          matrix1Grd.getChildren().clear();
+          matrix2Grd.getChildren().clear();
           answerBox.getChildren().clear();
           continuationBox.setVisible(false);
         });
@@ -400,10 +413,10 @@ public class MatrixOperationsGUI extends Application {
                 nfeAlert.showAndWait();
              }
         });
-        
+
         resetBtn.setOnAction(e -> {
-            matrix1Grd.getChildren().clear();  
-            matrix2Grd.getChildren().clear();  
+            matrix1Grd.getChildren().clear();
+            matrix2Grd.getChildren().clear();
             answerBox.getChildren().clear();
             continuationBox.setVisible(false);
           });
@@ -485,10 +498,10 @@ public class MatrixOperationsGUI extends Application {
                 nfeAlert.showAndWait();
              }
         });
-        
+
         resetBtn.setOnAction(e -> {
-            matrix1Grd.getChildren().clear();  
-            matrix2Grd.getChildren().clear();  
+            matrix1Grd.getChildren().clear();
+            matrix2Grd.getChildren().clear();
             answerBox.getChildren().clear();
             continuationBox.setVisible(false);
           });
@@ -497,11 +510,112 @@ public class MatrixOperationsGUI extends Application {
     }
 
     /**
+     * This method implements the GUI aspects needed to input and calculate the Row Reduced Echelon Form of a matrix
+     * @return a VBox of the GUI components needed
+     */
+    public static VBox rowReduceGUI() {
+        //Implementation is similar to determinantGUI except for the variable names, Operations call, addition of an answer box, and the allowed dimensions input
+        VBox processBox = new VBox();
+        processBox.setPadding(new Insets(10));
+        processBox.setSpacing(10);
+
+        VBox continuationBox = new VBox();
+        continuationBox.setSpacing(10);
+        continuationBox.setVisible(false);
+
+        VBox setMatrixBox = setMatrix(false, continuationBox);
+        GridPane matrixGrd = (GridPane)(setMatrixBox.getChildren().get(3));
+        Label answerLbl = new Label();
+        Button calculateBtn = new Button("Calculate Row Reduced Matrix");
+        Button resetBtn = new Button("Reset");
+
+        HBox answerBox = new HBox();
+        answerBox.setSpacing(5);
+
+        continuationBox.getChildren().addAll(calculateBtn, answerLbl, resetBtn);
+        processBox.getChildren().addAll(setMatrixBox, continuationBox);
+
+         calculateBtn.setOnAction(e -> {
+            try {
+                if (processBox.getChildren().contains(answerBox)) {
+                    processBox.getChildren().remove(2);
+                }
+                answerBox.getChildren().clear();
+               double[][] matrix = new double[matrixGrd.getRowCount()][matrixGrd.getColumnCount()];
+               for (int i = 0; i < matrix.length; i++) {
+                   for (int j = 0; j < matrix[i].length; j++) {
+                       matrix[i][j] = Integer.parseInt(((TextField)(matrixGrd.getChildren().get((i * (matrix[i].length)) + j))).getCharacters().toString());
+                   }
+               }
+               matrix = Operations.rowReduce(matrix);
+               answerBox.getChildren().addAll(new Label("RREF:"), displayMatrix(matrix));
+               processBox.getChildren().add(answerBox);
+            } catch (NumberFormatException nfe) {
+               Alert nfeAlert = new Alert(Alert.AlertType.ERROR);
+               nfeAlert.setTitle("Invalid input");
+               nfeAlert.setHeaderText("Error: incorrect number format");
+               nfeAlert.setContentText("Please fill all areas with numbers");
+               nfeAlert.showAndWait();
+            }
+       });
+
+       resetBtn.setOnAction(e -> {
+           matrixGrd.getChildren().clear();
+           answerBox.getChildren().clear();
+           continuationBox.setVisible(false);
+           answerLbl.setText("");
+       });
+       return processBox;
+    }
+
+    /**
      * This method displays a 2D int array in a readable format of a matrix
-     * @param matrix a 2d int array
+     * @param matrix a 2D int array
      * @return an HBox of the components that display the matrix
      */
     public static HBox displayMatrix(int[][] matrix) {
+        //These spacing boxes are meant as fillers that will be adjusted based on the size of the matrix, so it is displayed correctly
+        VBox matrixSpacingBox = new VBox();
+        VBox leftBracketSpacingBox = new VBox();
+        VBox rightBracketSpacingBox = new VBox();
+        matrixSpacingBox.setSpacing(matrix.length * 8.5);
+
+        //These labels house the brackets that will surround the displayed matrix
+        Label leftBracket = new Label("[");
+        Label rightBracket = new Label("]");
+
+        //The size of the brackets will be adjusted based on the number of rows of the matrix
+        leftBracket.setFont(new Font(matrix.length * 23));
+        rightBracket.setFont(new Font(matrix.length * 23));
+
+        //matrixAsGrd will house the labels that are entries in the matrix
+        GridPane matrixAsGrd = new GridPane();
+        matrixAsGrd.setHgap(5);
+        matrixAsGrd.setVgap(3);
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = 0; j < matrix[i].length; j++) {
+                Label temp = new Label("" + matrix[i][j]);
+                matrixAsGrd.add(temp, j, i);
+            }
+        }
+
+        //Labels are added to the spacingBoxes so that depending on the size of the matrix, the nodes will line up due to the adjusted spacing
+        matrixSpacingBox.getChildren().addAll(new Label(""), matrixAsGrd);
+        leftBracketSpacingBox.getChildren().addAll(new Label(""), leftBracket);
+        rightBracketSpacingBox.getChildren().addAll(new Label(""), rightBracket);
+
+        //displayMatrixBox puts the nodes into one box to be returned
+        HBox displayMatrixBox = new HBox(leftBracketSpacingBox, matrixSpacingBox, rightBracketSpacingBox);
+        displayMatrixBox.setSpacing(5);
+        return displayMatrixBox;
+    }
+
+    /**
+     * This is an overloaded method to accept input of a 2D array of type Double
+     * @param matrix a 2D double array
+     * @return an HBox of the components that display the matrix
+     */
+    public static HBox displayMatrix(double[][] matrix) {
         //These spacing boxes are meant as fillers that will be adjusted based on the size of the matrix, so it is displayed correctly
         VBox matrixSpacingBox = new VBox();
         VBox leftBracketSpacingBox = new VBox();
@@ -572,7 +686,7 @@ public class MatrixOperationsGUI extends Application {
             //else, returns the cofactor expansion algorithm for finding the determinant, adding each value using recursive calls iterating through each column
             return (int)Math.pow(-1, col+2) * matrix[0][col] * determinant(modifyMatrix(matrix, col), 0) + determinant(matrix, col+1);
         }
-        
+
         /**
          * The method is a private method called by determinant to modify the matrix making it smaller
          * @param matrix the initial nxn matrix input
@@ -600,7 +714,7 @@ public class MatrixOperationsGUI extends Application {
             }
             return newMatrix;
         }
-        
+
         /**
          * This method calculates the difference of two matrices
          * @param matrix1 a 2D int array (first matrix) of dimension nxm
@@ -640,6 +754,7 @@ public class MatrixOperationsGUI extends Application {
          * @return the product, a 2D int array of dimension nxk
          */
         public static int[][] product(int[][] matrix1, int[][] matrix2) {
+
             int[][] product = new int[matrix1.length][matrix2[0].length];
             for (int i = 0; i < matrix1.length; i++) {
                 for(int j = 0; j < matrix2[0].length; j++) {
@@ -651,6 +766,70 @@ public class MatrixOperationsGUI extends Application {
                 }
             }
             return product;
+        }
+
+        /**
+         * This method reduces the input matrix to row reduced echelon form
+         * @param matrix a 2D int array (matrix)
+         * @return the row reduced echelon form
+         */
+        public static double[][] rowReduce(double[][] matrix) {
+            //pivotRow points to the row of the current pivot being created, col points to the current column being iterated through
+            int pivotRow = 0;
+            int col = 0;
+            int numRows = matrix.length;
+            int numCols = matrix[0].length;
+            //The first order of iteration is column-major, and continues until there are no more cols or there are no more pivot rows
+            while (col < numCols && pivotRow < numRows) {
+                //if the current value is 0, search for a non-zero entry below to swap with
+                if (matrix[pivotRow][col] == 0) {
+                    boolean continueLoop = true;
+                    for (int i = pivotRow + 1; i < numRows; i++) {
+                        if (matrix[i][col] != 0) {
+                            double[] temp = matrix[pivotRow];
+                            matrix[pivotRow] = matrix[i];
+                            matrix[i] = temp;
+                            continueLoop = false;
+                        }
+                    }
+                    if (continueLoop) {
+                        col++;
+                        continue;
+                    }
+                }
+                //Scale the row so the pivot position equals 1
+                if (matrix[pivotRow][col] != 1) {
+                    double scalar = matrix[pivotRow][col];
+                    for (int i = col; i < numCols; i++) {
+                        matrix[pivotRow][i] /= scalar;
+                    }
+                }
+                //Reduce the rows above and below to create 0's, using the current row pivotRow
+                for (int row = 0; row < numRows; row++) {
+                    double leadingEntry = matrix[row][col];
+                    if (leadingEntry == 0 || row == pivotRow) {
+                        continue;
+                    }
+                    double scalar = matrix[row][col];
+                    for (int i = col; i < matrix[0].length; i++) {
+                        matrix[row][i] -= scalar * matrix[pivotRow][i];
+                    }
+                }
+                pivotRow++;
+                col++;
+            }
+            //All decimals are truncated to 2 places, all ints are kept to one decimal place
+            DecimalFormat df = new DecimalFormat("0.00");
+            for (int i = 0; i < numRows; i++) {
+                for (int j = 0; j < numCols; j++) {
+                    double num = matrix[i][j];
+                    if ((double)(int)num == num) {
+                        continue;
+                    }
+                    matrix[i][j] = Double.parseDouble(df.format(num));
+                }
+            }
+            return matrix;
         }
     }
 }
