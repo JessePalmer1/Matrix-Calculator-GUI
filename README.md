@@ -2,7 +2,7 @@
 This interface, created from javaFX, allows users to calculate various operations on matrices, such as row reduction, addition, subtraction, multiplication, and the determinant.
 
 The complete code is in MatrixOperationsGUI.java.
-A complete build ready to run is in MatrixOperationsGradle Build
+A complete build ready to run is in MatrixOperationsGradleBuild
 
 Basic Implementation:
 The start method (launched by main) runs a switch statement from the drop down box, which will call the appropriate matrix operation.
